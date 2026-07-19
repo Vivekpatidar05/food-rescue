@@ -1,6 +1,12 @@
 // volunteer.js — volunteer app: claim routes, deliver, earn trust.
 
-const API_BASE = "http://localhost:5000";
+// Same-origin in production (served behind nginx); localhost API in dev.
+const API_BASE =
+  location.protocol === "file:" ||
+  location.hostname === "localhost" ||
+  location.hostname === "127.0.0.1"
+    ? "http://localhost:5000"
+    : "";
 const POLL_MS = 15000;
 const FALLBACK_SPEED_KMH = 25; // matches backend fallback estimate
 

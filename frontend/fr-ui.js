@@ -18,7 +18,13 @@
 (function () {
   "use strict";
 
-  var API = "http://localhost:5000";
+  // Same-origin in production (served behind nginx); localhost API in dev.
+  var API =
+    location.protocol === "file:" ||
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1"
+      ? "http://localhost:5000"
+      : "";
   var SURGE_POLL_MS = 90000;
   var ALERT_POLL_MS = 45000;
 

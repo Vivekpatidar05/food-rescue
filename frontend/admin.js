@@ -1,7 +1,13 @@
 // admin.js — Ops Analytics dashboard: impact tiles, 30-day trend chart,
 // per-zone forecast chart, fraud-audit table. Charts are hand-rolled SVG.
 
-const API_BASE = "http://localhost:5000";
+// Same-origin in production (served behind nginx); localhost API in dev.
+const API_BASE =
+  location.protocol === "file:" ||
+  location.hostname === "localhost" ||
+  location.hostname === "127.0.0.1"
+    ? "http://localhost:5000"
+    : "";
 
 const ROLE_HOME = { donor: "donor.html", ngo: "ngo.html", volunteer: "volunteer.html" };
 const SVG_NS = "http://www.w3.org/2000/svg";

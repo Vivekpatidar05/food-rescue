@@ -1,6 +1,12 @@
 // ngo.js — NGO console: claim batches atomically, request volunteers, track trust.
 
-const API_BASE = "http://localhost:5000";
+// Same-origin in production (served behind nginx); localhost API in dev.
+const API_BASE =
+  location.protocol === "file:" ||
+  location.hostname === "localhost" ||
+  location.hostname === "127.0.0.1"
+    ? "http://localhost:5000"
+    : "";
 const POLL_MS = 20000;
 
 // ---------------------------------------------------------------------------

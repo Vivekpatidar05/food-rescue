@@ -85,9 +85,10 @@ sudo systemctl enable --now foodrescue
 
 ### 5. Serve the frontend from the same domain (no CORS pain)
 
-Point the frontend at the same origin: in each `frontend/*.js`, change
-`const API_BASE = "http://localhost:5000"` (and `var API` in `fr-ui.js`) to
-`""` — requests then hit the same domain and nginx routes them.
+The frontend **auto-detects its API origin**: on `localhost`/`127.0.0.1` it
+calls `http://localhost:5000` (dev), and on any real domain it uses relative
+URLs so requests hit the same origin and nginx routes them. No edit needed —
+just serve `frontend/` and proxy the API paths below.
 
 `/etc/nginx/sites-available/foodrescue`:
 
@@ -134,6 +135,27 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 
 Then `nginx -t && systemctl reload nginx`. (The Flask app already sets
 `X-Frame-Options`, `X-Content-Type-Options` and `Referrer-Policy`.)
+
+## Shipping updates
+
+Develop and test locally, push to GitHub, then deploy with one command **on
+the droplet**:
+
+```bash
+bash /opt/food-rescue/scripts/deploy.sh
+```
+
+`deploy.sh` pulls `master`, reinstalls Python deps **only if
+`requirements.txt` changed**, restarts the API, health-checks it, and
+**auto-rolls-back** to the previous commit if the new version fails to start.
+New DB indexes create themselves on restart (idempotent), and the frontend
+needs no post-pull edit (origin is auto-detected).
+
+- **Frontend change?** Bump `CACHE_VERSION` in `frontend/sw.js` in your commit,
+  or the service worker keeps serving the old shell to returning visitors.
+- **New config value?** Add it to `/opt/food-rescue/.env` by hand (`.env` is
+  never in git) and give it a sensible default in `os.getenv(...)`.
+- **Roll back manually:** `git reset --hard <good-commit> && systemctl restart foodrescue`.
 
 ## Automated backups
 
