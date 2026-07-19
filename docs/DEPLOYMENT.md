@@ -122,6 +122,89 @@ sudo nginx -t && sudo systemctl reload nginx
 - Sign-up flow sends a real OTP email (Brevo key set → no `dev_code` leaks).
 - `admin.html` signs in with your `.env` admin credentials.
 
+### 8. HTTPS hardening (HSTS)
+
+certbot handles the certificate; add an HSTS header so browsers refuse plain
+HTTP for a year. In the `443` server block that certbot created in
+`/etc/nginx/sites-available/foodrescue`, add inside `server { … }`:
+
+```nginx
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+```
+
+Then `nginx -t && systemctl reload nginx`. (The Flask app already sets
+`X-Frame-Options`, `X-Content-Type-Options` and `Referrer-Policy`.)
+
+## Automated backups
+
+MongoDB Atlas **M0 (free tier) has no automated backups** — a bad delete or
+migration is unrecoverable. `scripts/backup_db.py` closes that gap: it dumps
+every collection to one gzipped Extended-JSON file (lossless — ObjectIds and
+dates survive) and prunes anything older than 14 days.
+
+Install it as a daily cron job on the droplet:
+
+```bash
+cat > /etc/cron.d/foodrescue-backup <<'EOF'
+30 2 * * * root /opt/food-rescue/backend/.venv/bin/python /opt/food-rescue/scripts/backup_db.py >> /var/log/foodrescue-backup.log 2>&1
+EOF
+chmod 644 /etc/cron.d/foodrescue-backup
+# prove it works right away:
+/opt/food-rescue/backend/.venv/bin/python /opt/food-rescue/scripts/backup_db.py
+```
+
+Backups land in `/opt/food-rescue-backups/` (override with `FR_BACKUP_DIR`).
+Restore one with:
+
+```bash
+# merge (upsert by _id):
+python scripts/restore_db.py /opt/food-rescue-backups/foodrescue-YYYYMMDD-HHMMSS.jsonl.gz
+# exact point-in-time restore (drops collections first):
+python scripts/restore_db.py <file.jsonl.gz> --wipe
+```
+
+> These backups live **on the droplet**, so they cover app/DB-level data loss
+> but not loss of the droplet itself. For real disaster recovery, copy them
+> off-box periodically — `scp` them down, or push to DigitalOcean Spaces / S3.
+
+## Email deliverability (Brevo domain authentication)
+
+Sending "from" a `@gmail.com` address via Brevo works but Gmail's DMARC policy
+sends much of it to spam — which silently breaks signup, since users need the
+OTP email. Authenticate your own domain so mail passes SPF/DKIM/DMARC:
+
+1. **Brevo → Senders, Domains & Dedicated IPs → Domains → Add a domain** →
+   enter your domain.
+2. Brevo shows DNS records unique to your account — a **Brevo code** (TXT), a
+   **DKIM** record (TXT at `mail._domainkey`), and a **DMARC** record (TXT at
+   `_dmarc`); it may also ask you to add `include:spf.brevo.com` to your SPF.
+3. Add each record **exactly as shown** in your DNS host (name.com → *Manage
+   DNS*): Host is the subdomain part (`@`, `mail._domainkey`, `_dmarc`), Type
+   usually TXT, Value pasted verbatim.
+4. Wait ~5–15 min for DNS, then click **Authenticate / Verify** in Brevo.
+5. Point the app at a domain sender and restart:
+
+   ```ini
+   SENDER_EMAIL=no-reply@yourdomain.tld
+   SENDER_NAME=FoodRescue
+   ```
+   ```bash
+   systemctl restart foodrescue
+   ```
+
+After this, OTP and password-reset emails send from your domain and reach
+inboxes instead of spam.
+
+## Post-launch security checklist
+
+- **Tighten Atlas Network Access** from `0.0.0.0/0` to the droplet's IP only.
+- **Revoke the deploy API token** once provisioning is done (regenerate if you
+  need to manage the droplet again later).
+- **Firewall:** `ufw` should expose only `22`, `80`, `443`; the app port
+  (`5000`) stays bound to the droplet and reachable only via nginx.
+- **Rotate** any secret that was ever pasted into a shared channel
+  (`JWT_SECRET`, DB password, Brevo key) before real traffic.
+
 ## Notes for the data-science layer
 
 - `seed_data.py --reset` can populate Atlas with the 10k-batch synthetic
