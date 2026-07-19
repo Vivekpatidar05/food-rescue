@@ -5,10 +5,12 @@ with **volunteers** bridging the delivery gap. A 3-tier geospatial matching
 engine finds the nearest receiver within minutes, a trust-score system keeps
 every actor accountable, and the whole platform is **vegetarian-first**.
 
-Beyond matching, the platform ships a full operational layer: **KYC account
-verification** (every donor / NGO / volunteer is reviewed by an admin team
-before they can act), a **dedicated admin command center with separate
-credentials**, **forgot-password with emailed reset codes (Brevo API)**,
+Beyond matching, the platform ships a full operational layer: **signup email
+verification** (a 6-digit OTP proves the inbox is really yours before the
+account exists), **KYC account verification** (every donor / NGO / volunteer
+is reviewed by an admin team before they can act), a **dedicated admin
+command center with separate credentials**, **forgot-password with emailed
+reset codes (Brevo API)**,
 **per-rescue chat**, **live GPS courier tracking**, **peer star ratings**,
 **recurring donation schedules**, **food-safety windows** (the 4-hour rule,
 enforced), **volunteer shifts**, **NGO watch zones**, a **referral program**,
@@ -72,7 +74,7 @@ food-rescue/
 │   ├── sms.py               # 📲 opt-in SMS alerts via Brevo transactional SMS
 │   ├── integrations.py      # 🤖 POS API keys + machine-to-machine broadcast
 │   ├── esg.py               # 🌍 ESG carbon model + certified audit reports
-│   ├── e2e_test.py          # 201-check end-to-end regression suite
+│   ├── e2e_test.py          # 209-check end-to-end regression suite
 │   └── requirements.txt
 ├── frontend/
 │   ├── theme.css               # 🎨 "Festival" design tokens (violet→pink→orange)
@@ -95,6 +97,10 @@ food-rescue/
 ---
 
 ## Setup
+
+> Deploying to a real server? See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**
+> — a full production guide mapped to the GitHub Student Developer Pack
+> (DigitalOcean + MongoDB Atlas + free domain + HTTPS).
 
 ### 1. Clone & install
 
@@ -166,7 +172,9 @@ db.users.createIndex({ email: 1 }, { unique: true })
 | Method | Path                                | Auth        | Description |
 | ------ | ----------------------------------- | ----------- | ----------- |
 | GET    | `/health`                           | —           | Liveness check |
-| POST   | `/auth/register`                    | —           | Create account (name, email, password, role, lat/lng, address) |
+| POST   | `/auth/email-otp`                   | —           | 🆕 Send a 6-digit signup code to an email address (Brevo; dev fallback returns it) |
+| POST   | `/auth/verify-email-otp`            | —           | 🆕 Exchange the code for a short-lived `email_token` (15-min code, 5 attempts) |
+| POST   | `/auth/register`                    | —           | Create account (requires the OTP-verified `email_token` for the address) |
 | POST   | `/auth/login`                       | —           | Returns JWT + profile |
 | GET    | `/auth/me`                          | any role    | Current user profile (no password hash) |
 | GET    | `/auth/notifications`               | any role    | Latest 20 notifications |
@@ -656,7 +664,8 @@ MONGO_URI="mongodb://localhost:27017/food_rescue_e2e" python app.py   # terminal
 python e2e_test.py                                                    # terminal 2
 ```
 
-**201 checks** cover registration (including junk-signup rejection), account
+**209 checks** cover signup email OTP (send, wrong/right code, token binding,
+register gating), registration (including junk-signup rejection), account
 settings (profile edits, logged-in password change with session revocation,
 donor broadcast cancellation, password-confirmed account deletion), the ESG
 carbon engine (aggregation, model factors, equivalents, certified CSV,

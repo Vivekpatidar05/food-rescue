@@ -382,3 +382,8 @@ body {
 :root[data-theme="dark"] .verify-fieldset { border-color: var(--fr-brand-2); background: rgba(124, 58, 237, 0.09); }
 :root[data-theme="dark"] .verify-fieldset legend { color: var(--fr-brand-2); }
 :root[data-theme="dark"] .auth-links a { color: var(--fr-brand-2); }
+
+/* Signup email-OTP verification */
+.email-verify-row { display: flex; align-items: center; gap: 0.6rem; margin: 0.45rem 0 0.2rem; }
+.email-verified-badge { font-size: 0.82rem; font-weight: 700; color: #059669; }
+:root[data-theme="dark"] .email-verified-badge { color: #34d399; }

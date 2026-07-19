@@ -344,10 +344,30 @@ def register():
         return jsonify({"error": str(exc)}), 400
     user["verification_status"] = "pending"
 
+    # Duplicate check first so an existing address gets an honest 409 rather
+    # than the email-verification prompt (insert_one below is the race-proof
+    # backstop).
+    if db.users.find_one({"email": email}, {"_id": 1}) is not None:
+        return jsonify({"error": "An account with this email already exists"}), 409
+
+    # Email ownership: signup requires the OTP-verified email_token issued by
+    # /auth/verify-email-otp for this exact address.
+    if not _email_verified_ok(email, _as_str(data.get("email_token"))):
+        return (
+            jsonify(
+                {
+                    "error": "Please verify your email address first — we sent you a 6-digit code",
+                    "code": "email_not_verified",
+                }
+            ),
+            403,
+        )
+
     try:
         result = db.users.insert_one(user)
     except DuplicateKeyError:
         return jsonify({"error": "An account with this email already exists"}), 409
+    db.email_verifications.delete_one({"email": email})
 
     user["_id"] = result.inserted_id
     if referred_by is not None:
@@ -639,6 +659,145 @@ def reset_password():
     )
     db.notify(user["_id"], "password_reset", "Your password was changed successfully.")
     return jsonify({"message": "Password updated — you can sign in with your new password."})
+
+
+# ---------------------------------------------------------------------------
+# Signup email verification — an OTP proves the address is really yours
+# BEFORE the account is created. /email-otp sends the code, /verify-email-otp
+# exchanges it for a short-lived email_token, and /register requires that
+# token for the matching address.
+# ---------------------------------------------------------------------------
+
+EMAIL_OTP_TTL_MINUTES = 15
+MAX_EMAIL_OTP_ATTEMPTS = 5
+EMAIL_TOKEN_TTL_MINUTES = 30
+
+
+def _send_otp_email(email, code):
+    """Send the signup verification code via Brevo. Same dev fallback as the
+    reset flow: without an API key nothing is sent and the caller returns the
+    code in the response instead."""
+    if not BREVO_API_KEY:
+        return False
+    body = {
+        "sender": {"name": SENDER_NAME, "email": SENDER_EMAIL},
+        "to": [{"email": email}],
+        "subject": f"{code} is your FoodRescue signup code",
+        "htmlContent": (
+            "<div style='font-family:Arial,sans-serif;max-width:480px;margin:auto'>"
+            "<h2 style='color:#7c3aed'>&#129365; FoodRescue</h2>"
+            "<p>Welcome! Enter this code to verify your email address and "
+            "finish creating your account:</p>"
+            f"<p style='font-size:32px;font-weight:bold;letter-spacing:6px;"
+            f"color:#c026d3;text-align:center'>{code}</p>"
+            f"<p>The code expires in {EMAIL_OTP_TTL_MINUTES} minutes. "
+            "If you didn't try to sign up for FoodRescue, you can safely "
+            "ignore this email.</p>"
+            "</div>"
+        ),
+    }
+    try:
+        resp = http_requests.post(
+            BREVO_API_URL,
+            json=body,
+            headers={"api-key": BREVO_API_KEY, "content-type": "application/json"},
+            timeout=10,
+        )
+        if resp.status_code in (200, 201, 202):
+            return True
+        print(f"[auth] Brevo OTP send failed: {resp.status_code} {resp.text[:200]}")
+    except http_requests.RequestException as exc:
+        print(f"[auth] Brevo OTP send error: {exc}")
+    return False
+
+
+@auth_bp.post("/email-otp")
+@rate_limit(max_calls=15, window_seconds=60)
+def send_email_otp():
+    """Step 1 of signup: email in, 6-digit code out (to the inbox)."""
+    data = request.get_json(silent=True) or {}
+    email = _as_str(data.get("email")).strip().lower()
+    if not _EMAIL_RE.match(email):
+        return jsonify({"error": "Please enter a valid email address"}), 400
+    if db.users.find_one({"email": email}, {"_id": 1}) is not None:
+        return jsonify({"error": "An account with this email already exists — sign in instead"}), 409
+
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    db.email_verifications.update_one(
+        {"email": email},
+        {
+            "$set": {
+                "code_hash": generate_password_hash(code),
+                "expires_at": db.utcnow() + timedelta(minutes=EMAIL_OTP_TTL_MINUTES),
+                "attempts": 0,
+            },
+            "$setOnInsert": {"created_at": db.utcnow()},
+        },
+        upsert=True,
+    )
+    sent = _send_otp_email(email, code)
+    response = {
+        "message": "Verification code sent — check your inbox.",
+        "email_sent": sent,
+        "expires_in_minutes": EMAIL_OTP_TTL_MINUTES,
+    }
+    if not sent:
+        # Local development without BREVO_API_KEY — keep the flow testable.
+        print(f"[auth] DEV signup-verification code for {email}: {code}")
+        response["dev_code"] = code
+    return jsonify(response)
+
+
+@auth_bp.post("/verify-email-otp")
+@rate_limit(max_calls=20, window_seconds=60)
+def verify_email_otp():
+    """Step 2 of signup: code in, short-lived email_token out. The token is
+    what /register actually checks — it proves this exact address was
+    verified minutes ago."""
+    data = request.get_json(silent=True) or {}
+    email = _as_str(data.get("email")).strip().lower()
+    code = _as_str(data.get("code")).strip()
+    if not email or not code:
+        return jsonify({"error": "email and code are required"}), 400
+
+    invalid = {"error": "Invalid or expired verification code"}
+    record = db.email_verifications.find_one({"email": email})
+    if record is None:
+        return jsonify(invalid), 400
+    expires = record.get("expires_at")
+    if expires is not None and expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if expires is None or expires < db.utcnow():
+        return jsonify(invalid), 400
+    if int(record.get("attempts") or 0) >= MAX_EMAIL_OTP_ATTEMPTS:
+        return jsonify({"error": "Too many wrong codes — request a new one"}), 429
+    if not check_password_hash(record["code_hash"], code):
+        db.email_verifications.update_one({"_id": record["_id"]}, {"$inc": {"attempts": 1}})
+        return jsonify(invalid), 400
+
+    email_token = jwt.encode(
+        {
+            "sub": email,
+            "purpose": "email_verified",
+            "iat": db.utcnow(),
+            "exp": db.utcnow() + timedelta(minutes=EMAIL_TOKEN_TTL_MINUTES),
+        },
+        JWT_SECRET,
+        algorithm=JWT_ALGORITHM,
+    )
+    return jsonify({"verified": True, "email_token": email_token,
+                    "message": "Email verified — continue with your details."})
+
+
+def _email_verified_ok(email, email_token):
+    """True when email_token is a live email_verified token for this address."""
+    if not email_token:
+        return False
+    try:
+        payload = jwt.decode(email_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.InvalidTokenError:
+        return False
+    return payload.get("purpose") == "email_verified" and payload.get("sub") == email
 
 
 # ---------------------------------------------------------------------------

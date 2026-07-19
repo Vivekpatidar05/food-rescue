@@ -115,10 +115,25 @@ def approve(actor):
     )
 
 
+def email_token_for(email):
+    """Complete the signup email-OTP dance and return the email_token."""
+    resp = requests.post(f"{BASE}/auth/email-otp", json={"email": email}, timeout=10)
+    assert resp.status_code == 200, f"email-otp {email}: {resp.status_code} {resp.text[:200]}"
+    code = resp.json().get("dev_code")
+    assert code, "email-otp returned no dev_code — unset BREVO_API_KEY for e2e runs"
+    resp = requests.post(
+        f"{BASE}/auth/verify-email-otp", json={"email": email, "code": code}, timeout=10
+    )
+    assert resp.status_code == 200, f"verify-email-otp {email}: {resp.status_code} {resp.text[:200]}"
+    return resp.json()["email_token"]
+
+
 def register(name, role, lat, lng, approve_now=True, **extra):
+    email = f"{name.lower().replace(' ', '-')}-{STAMP}@e2e.test"
     body = {
         "name": name,
-        "email": f"{name.lower().replace(' ', '-')}-{STAMP}@e2e.test",
+        "email": email,
+        "email_token": email_token_for(email),
         "password": PASS,
         "role": role,
         "latitude": lat,
@@ -180,6 +195,42 @@ def main():
     ADMIN = admin_login()
     check("dedicated admin account signs in", ADMIN["user"].get("role") == "admin",
           str(ADMIN["user"].get("role")))
+
+    print("\n== Signup email verification (OTP) ==")
+    otp_email = f"otp-tester-{STAMP}@e2e.test"
+    resp = requests.post(f"{BASE}/auth/email-otp", json={"email": "not-an-email"}, timeout=10)
+    check("email-otp rejects an invalid address -> 400", resp.status_code == 400, resp.text[:120])
+    resp = requests.post(f"{BASE}/auth/email-otp", json={"email": ADMIN_EMAIL}, timeout=10)
+    check("email-otp refuses an existing account's email -> 409",
+          resp.status_code == 409, resp.text[:150])
+    resp = requests.post(f"{BASE}/auth/email-otp", json={"email": otp_email}, timeout=10)
+    check("email-otp sends a code (dev_code in dev mode)",
+          resp.status_code == 200 and bool(resp.json().get("dev_code")), resp.text[:200])
+    otp_code = resp.json().get("dev_code", "")
+    wrong = "000000" if otp_code != "000000" else "111111"
+    resp = requests.post(f"{BASE}/auth/verify-email-otp",
+                         json={"email": otp_email, "code": wrong}, timeout=10)
+    check("wrong OTP -> 400", resp.status_code == 400, resp.text[:120])
+    resp = requests.post(f"{BASE}/auth/verify-email-otp",
+                         json={"email": otp_email, "code": otp_code}, timeout=10)
+    check("correct OTP -> 200 + email_token",
+          resp.status_code == 200 and bool(resp.json().get("email_token")), resp.text[:200])
+    otp_token = resp.json().get("email_token", "")
+    body_ok = {"name": "OTP Tester", "email": otp_email, "password": PASS, "role": "donor",
+               "latitude": 22.71, "longitude": 75.86, "address": "9 OTP Street, Indore",
+               "verification": dict(VERIFY_DETAILS["donor"])}
+    resp = requests.post(f"{BASE}/auth/register", json=body_ok, timeout=10)
+    check("register without email_token -> 403 email_not_verified",
+          resp.status_code == 403 and resp.json().get("code") == "email_not_verified",
+          resp.text[:150])
+    resp = requests.post(f"{BASE}/auth/register",
+                         json={**body_ok, "email": f"other-{STAMP}@e2e.test",
+                               "email_token": otp_token}, timeout=10)
+    check("email_token is bound to its address (mismatch -> 403)",
+          resp.status_code == 403, resp.text[:150])
+    resp = requests.post(f"{BASE}/auth/register",
+                         json={**body_ok, "email_token": otp_token}, timeout=10)
+    check("register with a valid email_token -> 201", resp.status_code == 201, resp.text[:200])
 
     print("\n== Registration + KYC verification gate ==")
     noverify = requests.post(f"{BASE}/auth/register", json={

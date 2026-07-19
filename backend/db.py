@@ -190,6 +190,9 @@ ratings = db.ratings
 recurring_donations = db.recurring_donations
 batch_templates = db.batch_templates
 platform_settings = db.platform_settings
+# Signup email-ownership OTPs: {email (unique), code_hash, expires_at,
+# attempts, created_at}. TTL-indexed — records vanish after expiry.
+email_verifications = db.email_verifications
 
 
 def ping():
@@ -245,6 +248,12 @@ def initialize():
     db.ratings.create_index([("ratee_id", ASCENDING), ("created_at", DESCENDING)])
     db.recurring_donations.create_index([("active", ASCENDING), ("next_run_at", ASCENDING)])
     db.batch_templates.create_index([("donor_id", ASCENDING)])
+    # Signup OTPs: one live code per email; Mongo TTL reaps expired records.
+    try:
+        db.email_verifications.create_index([("email", ASCENDING)], unique=True)
+        db.email_verifications.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
+    except (DuplicateKeyError, OperationFailure) as exc:
+        print(f"[db] WARNING: email_verifications indexes not built: {exc}")
     for collection, keys in (
         (db.users, [("email", ASCENDING)]),
         (db.delivery_proofs, [("batch_id", ASCENDING)]),

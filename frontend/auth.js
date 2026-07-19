@@ -226,6 +226,74 @@ document.getElementById("btn-resend-code").addEventListener("click", async () =>
 });
 
 // ---------------------------------------------------------------------------
+// Signup email verification — OTP proves the inbox is really theirs before
+// the account exists. The server refuses /auth/register without the token.
+// ---------------------------------------------------------------------------
+
+let emailToken = null;
+let verifiedEmail = null;
+
+const otpBlock = document.getElementById("email-otp-block");
+const otpSentNote = document.getElementById("otp-sent-note");
+const sendOtpBtn = document.getElementById("btn-send-otp");
+const verifiedBadge = document.getElementById("email-verified-badge");
+
+function resetEmailVerification() {
+  emailToken = null;
+  verifiedEmail = null;
+  otpBlock.classList.add("hidden");
+  verifiedBadge.classList.add("hidden");
+  sendOtpBtn.classList.remove("hidden");
+}
+
+document.getElementById("reg-email").addEventListener("input", () => {
+  const email = document.getElementById("reg-email").value.trim().toLowerCase();
+  if (verifiedEmail && email !== verifiedEmail) resetEmailVerification();
+});
+
+sendOtpBtn.addEventListener("click", async () => {
+  clearError();
+  const email = document.getElementById("reg-email").value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(email)) {
+    showError("Enter a valid email address first, then send the code.");
+    document.getElementById("reg-email").focus();
+    return;
+  }
+  try {
+    const data = await postJson("/auth/email-otp", { email });
+    otpSentNote.textContent = data.dev_code
+      ? `⚙️ Dev mode (no email service configured): your code is ${data.dev_code}`
+      : "📬 A 6-digit code is on its way to your inbox. It expires in 15 minutes.";
+    otpBlock.classList.remove("hidden");
+    sendOtpBtn.textContent = "↻ Resend code";
+    document.getElementById("reg-otp").focus();
+  } catch (error) {
+    showError(error.message);
+  }
+});
+
+document.getElementById("btn-verify-otp").addEventListener("click", async () => {
+  clearError();
+  const email = document.getElementById("reg-email").value.trim();
+  const code = document.getElementById("reg-otp").value.trim();
+  if (code.length !== 6) {
+    showError("Enter the 6-digit code from your inbox.");
+    return;
+  }
+  try {
+    const data = await postJson("/auth/verify-email-otp", { email, code });
+    emailToken = data.email_token;
+    verifiedEmail = email.toLowerCase();
+    otpBlock.classList.add("hidden");
+    sendOtpBtn.classList.add("hidden");
+    verifiedBadge.classList.remove("hidden");
+    if (window.frUI) frUI.toast("Email verified — finish the rest of the form!", "success");
+  } catch (error) {
+    showError(error.message);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Registration — profile + role-specific verification details
 // ---------------------------------------------------------------------------
 
@@ -308,9 +376,16 @@ registerForm.addEventListener("submit", async (event) => {
     showError(problem);
     return;
   }
+  const regEmail = document.getElementById("reg-email").value.trim();
+  if (!emailToken || regEmail.toLowerCase() !== verifiedEmail) {
+    showError("Please verify your email first — click \"Send verification code\" next to the email field.");
+    sendOtpBtn.focus();
+    return;
+  }
   const payload = {
     name: document.getElementById("reg-name").value.trim(),
-    email: document.getElementById("reg-email").value.trim(),
+    email: regEmail,
+    email_token: emailToken,
     password: document.getElementById("reg-password").value,
     role,
     address: document.getElementById("reg-address").value.trim(),

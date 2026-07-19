@@ -91,6 +91,16 @@
 
         <label for="reg-email">Email</label>
         <input id="reg-email" type="email" autocomplete="email" required />
+        <div class="email-verify-row">
+          <button id="btn-send-otp" class="btn-ghost" type="button">📮 Send verification code</button>
+          <span id="email-verified-badge" class="email-verified-badge hidden">✅ Email verified</span>
+        </div>
+        <div id="email-otp-block" class="hidden">
+          <p id="otp-sent-note" class="form-hint">A 6-digit code is on its way to your inbox. It expires in 15 minutes.</p>
+          <label for="reg-otp">6-digit email code</label>
+          <input id="reg-otp" type="text" inputmode="numeric" maxlength="6" placeholder="••••••" autocomplete="one-time-code" />
+          <button id="btn-verify-otp" class="btn-ghost" type="button">✔ Verify email</button>
+        </div>
 
         <label for="reg-password">Password (min 8 characters)</label>
         <input id="reg-password" type="password" autocomplete="new-password" required />
