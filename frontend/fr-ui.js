@@ -1063,6 +1063,8 @@
       }).catch(function (err) { toast(err.message, "error"); });
     });
 
+    enhancePasswords(overlay);
+
     overlay.querySelector('[data-form="delete"]').addEventListener("submit", function (event) {
       event.preventDefault();
       if (!confirm("Delete your FoodRescue account forever? This cannot be undone.")) return;
@@ -1079,11 +1081,52 @@
   }
 
   function mountAccountEntry() {
+    if (!token() || !PAGE_ROLE) return;
     var nameEl = document.getElementById("user-name");
-    if (!nameEl || !token()) return;
-    nameEl.classList.add("fr-account-link");
-    nameEl.title = "Account settings";
-    nameEl.addEventListener("click", openAccountSettings);
+    if (nameEl) {
+      nameEl.classList.add("fr-account-link");
+      nameEl.title = "Account settings";
+      nameEl.addEventListener("click", openAccountSettings);
+    }
+    // A gear in the nav keeps account settings one tap away on every page
+    // and screen size (the user-name is absent on some panels, hidden on
+    // phones on the others).
+    var navRight = document.querySelector(".nav-right");
+    if (navRight && !navRight.querySelector(".fr-nav-gear")) {
+      var gear = el("button", "fr-nav-gear", "⚙");
+      gear.type = "button";
+      gear.title = "Account settings";
+      gear.setAttribute("aria-label", "Account settings");
+      gear.addEventListener("click", openAccountSettings);
+      var logout = document.getElementById("btn-logout");
+      if (logout && logout.parentNode === navRight) navRight.insertBefore(gear, logout);
+      else navRight.appendChild(gear);
+    }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Password visibility toggles — auto-attached to every password      *
+   * input (login, signup, reset, settings), like every major product.  *
+   * ------------------------------------------------------------------ */
+  function enhancePasswords(scope) {
+    (scope || document).querySelectorAll('input[type="password"]').forEach(function (input) {
+      if (input.closest(".fr-pw-wrap")) return;
+      var wrap = el("span", "fr-pw-wrap");
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+      var eye = el("button", "fr-pw-eye", "👁");
+      eye.type = "button";
+      eye.setAttribute("aria-label", "Show password");
+      eye.tabIndex = -1; // keep the tab order on the fields themselves
+      eye.addEventListener("click", function () {
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        eye.textContent = show ? "🙈" : "👁";
+        eye.setAttribute("aria-label", show ? "Hide password" : "Show password");
+        input.focus();
+      });
+      wrap.appendChild(eye);
+    });
   }
 
   /* ------------------------------------------------------------------ *
@@ -1100,6 +1143,7 @@
   function boot() {
     mountHint();
     mountAccountEntry();
+    enhancePasswords(document);
     // Deep link: <panel>.html#settings opens account settings straight away.
     if (location.hash === "#settings" && token()) {
       setTimeout(openAccountSettings, 400);
@@ -1159,5 +1203,6 @@
     certificate: openCertificate,
     toggleSmsAlerts: toggleSmsAlerts,
     accountSettings: openAccountSettings,
+    enhancePasswords: enhancePasswords,
   };
 })();

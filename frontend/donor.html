@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>FoodRescue — Donor Dashboard</title>
   <meta name="theme-color" content="#7c3aed" />
   <link rel="manifest" href="manifest.webmanifest" />
@@ -61,7 +61,7 @@
       <div class="panel-head">
         <h2>🏆 Your Rescue Journey</h2>
       </div>
-      <div id="achievements-card"><p class="empty-state">Loading your badges…</p></div>
+      <div id="achievements-card"><div class="fr-skeleton-group"><div class="fr-skeleton slim"></div><div class="fr-skeleton slim"></div></div></div>
     </section>
 
     <section id="broadcast-section" class="panel fr-accent-top hidden">
@@ -146,7 +146,7 @@
         <span id="refresh-note" class="refresh-note">auto-refreshes every 30s</span>
       </div>
       <div id="batches-list" class="batches-list">
-        <p class="empty-state">Loading your batches…</p>
+        <div class="fr-skeleton-group"><div class="fr-skeleton"></div><div class="fr-skeleton"></div><div class="fr-skeleton"></div></div>
       </div>
     </section>
 

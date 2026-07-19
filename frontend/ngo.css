@@ -510,3 +510,16 @@ body {
 }
 .cold-storage-line small { font-weight: 400; color: var(--fr-muted); }
 .cold-storage-line input { width: auto; accent-color: var(--fr-sky); }
+
+/* Phone layout — compact nav + wrapping panel headers */
+@media (max-width: 640px) {
+  .nav { gap: 0.4rem; }
+  .nav-right { gap: 0.45rem; }
+  .logo { font-size: 1.02rem; }
+  .trust-badge { padding: 0.3rem 0.55rem; font-size: 0.8rem; }
+  .btn-logout { padding: 0.42rem 0.7rem; font-size: 0.8rem; }
+  .container { padding: 1.1rem 0.8rem 3rem; }
+  .panel { padding: 1.15rem 1rem; }
+  .panel-head { flex-wrap: wrap; gap: 0.3rem 0.8rem; }
+  .batch-actions { flex-wrap: wrap; }
+}

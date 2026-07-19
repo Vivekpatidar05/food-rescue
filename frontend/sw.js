@@ -7,7 +7,7 @@
  *
  * Bump CACHE_VERSION whenever shipped frontend files change.
  */
-const CACHE_VERSION = "fr-shell-v2";
+const CACHE_VERSION = "fr-shell-v3";
 
 const SHELL = [
   "auth.html", "donor.html", "ngo.html", "volunteer.html", "admin.html",

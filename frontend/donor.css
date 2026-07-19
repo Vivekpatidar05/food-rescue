@@ -853,3 +853,23 @@ body {
   transition: height 0.5s var(--fr-ease);
 }
 .esg-month span { font-size: 0.64rem; color: var(--fr-muted); }
+
+/* Phone layout — compact nav, fluid hero, panels that breathe */
+.hero-title { font-size: clamp(1.7rem, 6.5vw, 3rem); }
+@media (max-width: 640px) {
+  .nav { gap: 0.4rem; }
+  .nav-right { gap: 0.45rem; }
+  .logo { font-size: 1.02rem; }
+  .trust-badge { padding: 0.3rem 0.55rem; font-size: 0.8rem; }
+  .btn-logout { padding: 0.42rem 0.7rem; font-size: 0.8rem; }
+  .hero { padding: 2.4rem 1.1rem 2.6rem; }
+  .hero-sub { font-size: 0.92rem; }
+  .impact-chip { font-size: 0.78rem; padding: 0.4rem 0.7rem; }
+  .container { padding: 1.1rem 0.8rem 3rem; }
+  .panel { padding: 1.15rem 1rem; }
+  .panel-head { flex-wrap: wrap; gap: 0.3rem 0.8rem; }
+  .batch-actions { flex-wrap: wrap; }
+  /* 12 months of ESG bars scroll sideways instead of squeezing */
+  .esg-months-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .esg-months { min-width: 430px; }
+}

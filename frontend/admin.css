@@ -584,3 +584,15 @@ td:first-child { color: var(--ink); font-weight: 500; }
 
 /* Tab visibility must always win, whatever display a section uses. */
 #admin-main [data-tab].hidden { display: none !important; }
+
+/* Phone layout — compact console */
+@media (max-width: 640px) {
+  .nav { gap: 0.4rem; padding: 0.7rem 0.9rem; flex-wrap: wrap; }
+  .nav-right { gap: 0.45rem; }
+  .container { padding: 1rem 0.7rem 3rem; }
+  .panel { padding: 1.1rem 0.95rem; }
+  .panel-head { flex-wrap: wrap; gap: 0.3rem 0.8rem; }
+  /* Login screen: content-first instead of a tall empty column */
+  .admin-login { align-items: flex-start; padding-top: 9vh; }
+  .admin-login-card { padding: 1.7rem 1.2rem; }
+}

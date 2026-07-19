@@ -1033,3 +1033,126 @@ textarea:focus-visible,
 .fr-handoff-qr svg { width: 160px; height: 160px; border-radius: 0.5rem; background: #fff; padding: 6px; }
 .fr-handoff-qr-note { font-size: 0.8rem; color: var(--fr-muted); }
 .fr-handoff-note { font-size: 0.8rem; color: var(--fr-ink-2); line-height: 1.45; }
+
+/* ===========================================================================
+   Mobile-first & touch polish — shared layer
+   =========================================================================== */
+
+/* Account-settings gear — the always-visible entry point in every nav */
+.fr-nav-gear {
+  font: inherit;
+  font-size: 1.05rem;
+  line-height: 1;
+  width: 2.3rem;
+  height: 2.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: transform 0.15s var(--fr-ease), background 0.15s;
+}
+.fr-nav-gear:hover { background: rgba(255, 255, 255, 0.22); transform: rotate(25deg); }
+
+/* Password visibility toggle (auto-attached to every password input) */
+.fr-pw-wrap { position: relative; display: block; }
+.fr-pw-wrap input { width: 100%; padding-right: 2.7rem !important; }
+.fr-pw-eye {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.1rem;
+  height: 2.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--fr-muted);
+  border-radius: 0.5rem;
+}
+.fr-pw-eye:hover { color: var(--fr-brand); }
+
+/* Skeleton shimmer — replaces "Loading…" text while lists fetch */
+.fr-skeleton-group { display: grid; gap: 0.65rem; padding: 0.35rem 0; }
+.fr-skeleton {
+  height: 3.4rem;
+  border-radius: 0.8rem;
+  background: linear-gradient(
+    100deg,
+    var(--fr-surface-2) 40%,
+    var(--fr-surface-3) 50%,
+    var(--fr-surface-2) 60%
+  );
+  background-size: 200% 100%;
+  animation: fr-shimmer 1.4s linear infinite;
+}
+.fr-skeleton.slim { height: 2.1rem; }
+@keyframes fr-shimmer {
+  from { background-position: 120% 0; }
+  to   { background-position: -80% 0; }
+}
+@media (prefers-reduced-motion: reduce) { .fr-skeleton { animation: none; } }
+
+/* Bottom-sheet slide-up used by modals on phones */
+@keyframes fr-sheet-up {
+  from { opacity: 0.6; transform: translateY(28px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  /* iOS: inputs under 16px trigger zoom-on-focus — never zoom */
+  body input, body select, body textarea { font-size: max(16px, 1em); }
+
+  /* Comfortable thumb targets for the primary actions */
+  .fr-btn-primary, .fr-btn-quiet, .fr-btn-danger,
+  .btn-primary, .btn-cta, .btn-ghost { min-height: 46px; }
+  .fr-btn-mini { min-height: 38px; }
+
+  /* Modals become bottom sheets */
+  .fr-modal-overlay { align-items: flex-end; padding: 0; }
+  .fr-modal {
+    width: 100%;
+    max-width: none;
+    max-height: 92dvh;
+    overflow-y: auto;
+    border-radius: 1.25rem 1.25rem 0 0;
+    animation: fr-sheet-up 0.22s var(--fr-ease);
+    padding-bottom: calc(1.6rem + env(safe-area-inset-bottom, 0px));
+  }
+  .fr-settings { width: 100%; max-height: 92dvh; }
+
+  /* Chat dock: full-width bottom sheet */
+  .fr-chat-dock {
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: min(70dvh, 26rem);
+    border-radius: 1.1rem 1.1rem 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Command palette: use the top of the screen comfortably */
+  .fr-palette-overlay { padding: 4vh 0.75rem 0.75rem; }
+
+  /* Verification gate + tour cards fit small screens */
+  .fr-verify-card { padding: 1.7rem 1.15rem; }
+  .fr-tour-card { width: min(20rem, calc(100vw - 1.5rem)); }
+
+  /* Live ticker: tighter type so it never dominates the viewport */
+  .fr-ticker { font-size: 0.72rem; }
+
+  /* Achievement badges wrap tighter */
+  .fr-ach-grid { gap: 0.4rem; }
+}

@@ -387,3 +387,24 @@ body {
 .email-verify-row { display: flex; align-items: center; gap: 0.6rem; margin: 0.45rem 0 0.2rem; }
 .email-verified-badge { font-size: 0.82rem; font-weight: 700; color: #059669; }
 :root[data-theme="dark"] .email-verified-badge { color: #34d399; }
+
+/* Signup OTP input — big, spaced digits like a real verification field */
+#reg-otp {
+  letter-spacing: 0.45em;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Phone-first: brand strip stays compact so the form is immediately visible */
+@media (max-width: 640px) {
+  .auth-side { padding: 1.4rem 1.25rem 1.2rem; }
+  .side-headline { font-size: clamp(1.45rem, 6.5vw, 1.9rem); margin: 0.4rem 0; }
+  .side-copy { font-size: 0.88rem; margin-bottom: 0.4rem; }
+  .side-points { display: none; }   /* the pitch lives on; the form comes first */
+  .auth-panel { padding: 1.4rem 1.1rem 2rem; }
+  .role-grid { gap: 0.5rem; }
+  .geo-row { grid-template-columns: 1fr 1fr; }
+  .geo-row .btn-ghost { grid-column: 1 / -1; }
+}

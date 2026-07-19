@@ -57,6 +57,9 @@ function switchTab(showLogin) {
 loginTab.addEventListener("click", () => switchTab(true));
 registerTab.addEventListener("click", () => switchTab(false));
 
+// Deep link: auth.html#register opens the Create Account tab directly.
+if (location.hash === "#register") switchTab(false);
+
 // Role selection toggles the NGO extras and the per-role verification block.
 const verifyBlocks = {
   donor: document.getElementById("verify-donor"),
@@ -276,6 +279,13 @@ sendOtpBtn.addEventListener("click", async () => {
   } catch (error) {
     showError(error.message);
   }
+});
+
+// Auto-verify the moment the 6th digit is typed — one less tap on mobile.
+document.getElementById("reg-otp").addEventListener("input", (event) => {
+  const digits = event.target.value.replace(/\D/g, "").slice(0, 6);
+  if (digits !== event.target.value) event.target.value = digits;
+  if (digits.length === 6) document.getElementById("btn-verify-otp").click();
 });
 
 document.getElementById("btn-verify-otp").addEventListener("click", async () => {
