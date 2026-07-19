@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodRescue — Sign In</title>
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap"
+    rel="stylesheet"
+  />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("fr_theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+  <main class="auth-shell">
+    <aside class="auth-side">
+      <div class="side-inner">
+        <p class="logo">🥗 FoodRescue</p>
+        <h1 class="side-headline">Every Meal Saved Matters</h1>
+        <p class="side-copy">
+          Donors broadcast surplus food, NGOs claim it, volunteers move it.
+          A vegetarian-first rescue network powered by trust.
+        </p>
+        <ul class="side-points">
+          <li>⚡ 3-tier geospatial matching within 10 km</li>
+          <li>🤝 Trust scores + peer star ratings</li>
+          <li>🌱 Vegetarian-first, food-safety aware</li>
+          <li>💬 Live chat &amp; GPS courier tracking</li>
+          <li>🔁 Recurring donations that run themselves</li>
+        </ul>
+      </div>
+    </aside>
+
+    <section class="auth-panel">
+      <div class="tabs" role="tablist">
+        <button id="tab-login" class="tab active" type="button">Sign In</button>
+        <button id="tab-register" class="tab" type="button">Create Account</button>
+      </div>
+
+      <form id="login-form" class="auth-form" novalidate>
+        <h2>Welcome back</h2>
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" autocomplete="email" required />
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" autocomplete="current-password" required />
+        <button class="btn-primary" type="submit">Sign In</button>
+        <p class="auth-links">
+          <a href="#" id="link-forgot">Forgot password?</a>
+        </p>
+      </form>
+
+      <form id="forgot-form" class="auth-form hidden" novalidate>
+        <h2>Reset your password</h2>
+        <div id="forgot-step-1">
+          <p class="form-hint">Enter your account email — we'll send a 6-digit reset code.</p>
+          <label for="forgot-email">Email</label>
+          <input id="forgot-email" type="email" autocomplete="email" required />
+          <button class="btn-primary" type="submit">Send reset code</button>
+        </div>
+        <div id="forgot-step-2" class="hidden">
+          <p class="form-hint" id="forgot-sent-note">A reset code is on its way to your inbox. It expires in 15 minutes.</p>
+          <label for="forgot-code">6-digit code</label>
+          <input id="forgot-code" type="text" inputmode="numeric" maxlength="6" placeholder="••••••" autocomplete="one-time-code" required />
+          <label for="forgot-new-password">New password (min 8 characters)</label>
+          <input id="forgot-new-password" type="password" autocomplete="new-password" required />
+          <button class="btn-primary" type="submit">Set new password</button>
+          <button class="btn-ghost" id="btn-resend-code" type="button">↻ Resend code</button>
+        </div>
+        <p class="auth-links"><a href="#" id="link-back-login">← Back to sign in</a></p>
+      </form>
+
+      <form id="register-form" class="auth-form hidden" novalidate>
+        <h2>Join the rescue network</h2>
+
+        <label for="reg-name">Full name / Organization name</label>
+        <input id="reg-name" type="text" autocomplete="name" required />
+
+        <label for="reg-email">Email</label>
+        <input id="reg-email" type="email" autocomplete="email" required />
+
+        <label for="reg-password">Password (min 8 characters)</label>
+        <input id="reg-password" type="password" autocomplete="new-password" required />
+
+        <span class="field-label">I am a…</span>
+        <div class="role-grid">
+          <label class="role-card">
+            <input type="radio" name="role" value="donor" checked />
+            <span class="role-emoji">🍲</span>
+            <span class="role-name">Donor</span>
+          </label>
+          <label class="role-card">
+            <input type="radio" name="role" value="ngo" />
+            <span class="role-emoji">🏛️</span>
+            <span class="role-name">NGO</span>
+          </label>
+          <label class="role-card">
+            <input type="radio" name="role" value="volunteer" />
+            <span class="role-emoji">🚗</span>
+            <span class="role-name">Volunteer</span>
+          </label>
+        </div>
+
+        <div id="ngo-extra" class="ngo-extra hidden">
+          <label for="reg-partner-type">Organization type</label>
+          <select id="reg-partner-type">
+            <option value="food_charity" selected>Food charity</option>
+            <option value="animal_shelter">Animal shelter (secondary partner)</option>
+          </select>
+          <label class="check-line" for="reg-accepts-nonveg">
+            <input id="reg-accepts-nonveg" type="checkbox" />
+            We also accept non-vegetarian / egg-based food
+          </label>
+          <label class="check-line" for="reg-cold-storage">
+            <input id="reg-cold-storage" type="checkbox" />
+            ❄ We have cold storage (unlocks dairy / refrigeration-dependent batches)
+          </label>
+        </div>
+
+        <label for="reg-address">Address</label>
+        <input id="reg-address" type="text" autocomplete="street-address" required />
+
+        <fieldset class="verify-fieldset">
+          <legend>🛡️ Verification details</legend>
+          <p class="form-hint">
+            Every account is reviewed by our team before activation — genuine
+            details get you approved faster.
+          </p>
+
+          <label for="reg-phone">Contact phone</label>
+          <input id="reg-phone" type="tel" autocomplete="tel" placeholder="+91 98765 43210" required />
+
+          <div id="verify-donor" class="verify-block">
+            <label for="reg-org-type">Donor type</label>
+            <select id="reg-org-type">
+              <option value="restaurant" selected>Restaurant</option>
+              <option value="caterer">Caterer</option>
+              <option value="event_hall">Event / marriage hall</option>
+              <option value="hostel_canteen">Hostel / canteen</option>
+              <option value="household">Household</option>
+              <option value="other">Other</option>
+            </select>
+            <label for="reg-business-name">Business name <span class="optional-tag">(as on licence)</span></label>
+            <input id="reg-business-name" type="text" maxlength="80" />
+            <label for="reg-donor-id" id="reg-donor-id-label">FSSAI / shop licence / govt ID number</label>
+            <input id="reg-donor-id" type="text" maxlength="40" placeholder="e.g. 11419850000000" />
+          </div>
+
+          <div id="verify-ngo" class="verify-block hidden">
+            <label for="reg-ngo-reg">NGO registration number</label>
+            <input id="reg-ngo-reg" type="text" maxlength="40" placeholder="Society / Trust / Sec-8 reg. no." />
+            <label for="reg-ngo-darpan">NGO Darpan ID <span class="optional-tag">(optional)</span></label>
+            <input id="reg-ngo-darpan" type="text" maxlength="40" placeholder="e.g. MP/2020/0251234" />
+          </div>
+
+          <div id="verify-volunteer" class="verify-block hidden">
+            <label for="reg-licence">Driving licence number</label>
+            <input id="reg-licence" type="text" maxlength="40" placeholder="e.g. MP09 20210012345" />
+            <label for="reg-vehicle">Vehicle</label>
+            <select id="reg-vehicle">
+              <option value="bike" selected>Motorbike</option>
+              <option value="scooter">Scooter</option>
+              <option value="bicycle">Bicycle</option>
+              <option value="car">Car</option>
+              <option value="van">Van / tempo</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <label for="reg-id-doc">📎 ID document photo <span class="optional-tag">(optional — JPEG/PNG, speeds up review)</span></label>
+          <input id="reg-id-doc" type="file" accept="image/*" />
+          <p id="reg-id-doc-note" class="form-hint hidden"></p>
+        </fieldset>
+
+        <label for="reg-referral">🎁 Referral code <span class="optional-tag">(optional — you both earn bonus trust)</span></label>
+        <input id="reg-referral" type="text" maxlength="12" placeholder="e.g. K7KM3P" autocomplete="off" style="text-transform: uppercase;" />
+
+        <div class="geo-row">
+          <div class="geo-field">
+            <label for="reg-lat">Latitude</label>
+            <input id="reg-lat" type="text" readonly placeholder="—" />
+          </div>
+          <div class="geo-field">
+            <label for="reg-lng">Longitude</label>
+            <input id="reg-lng" type="text" readonly placeholder="—" />
+          </div>
+          <button id="btn-locate" class="btn-ghost" type="button">📍 Use my location</button>
+        </div>
+
+        <button class="btn-primary" type="submit">Create Account</button>
+      </form>
+
+      <p id="auth-error" class="auth-error hidden"></p>
+    </section>
+  </main>
+
+  <script src="theme.js"></script>
+  <script src="fr-ui.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>

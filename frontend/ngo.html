@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodRescue — NGO Console</title>
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("fr_theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="ngo.css" />
+</head>
+<body>
+  <nav class="nav">
+    <span class="logo">🥗 FoodRescue <span class="logo-sub">NGO Console</span></span>
+    <div class="nav-right">
+      <div class="bell-wrap">
+        <button id="btn-bell" class="btn-bell" type="button" title="Notifications">
+          🔔<span id="bell-count" class="bell-count hidden">0</span>
+        </button>
+        <div id="bell-panel" class="bell-panel hidden"></div>
+      </div>
+      <span id="trust-badge" class="trust-badge" title="Your trust score">🛡 100</span>
+      <span id="org-name" class="org-name"></span>
+      <button id="btn-logout" class="btn-logout" type="button">Log out</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section id="active-section" class="panel active-panel hidden">
+      <h2>📦 My Active Pickup</h2>
+      <div id="active-card"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Available Food Near You</h2>
+        <span class="refresh-note">auto-refreshes every 20s</span>
+      </div>
+      <div id="available-list" class="available-list">
+        <p class="empty-state">Scanning for nearby batches…</p>
+      </div>
+    </section>
+
+    <section class="panel fr-accent-top">
+      <div class="panel-head">
+        <h2>👁 Watch Zones</h2>
+        <span class="refresh-note">get pinged for every batch in these zones — any distance</span>
+      </div>
+      <p class="zone-hint">
+        Monitor the parts of the city where surplus concentrates (wholesale
+        markets, banquet districts). New batches there always reach you, even
+        beyond the normal matching radius.
+      </p>
+      <div id="zone-chips" class="fr-chip-row">
+        <p class="empty-state">Loading zones…</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>🏆 Your Rescue Journey</h2>
+      </div>
+      <div id="achievements-card"><p class="empty-state">Loading your badges…</p></div>
+    </section>
+
+    <section class="panel">
+      <h2>Trust Score History</h2>
+      <ul id="trust-log" class="trust-log">
+        <li class="empty-state">No trust events yet.</li>
+      </ul>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="theme.js"></script>
+  <script src="fr-ui.js"></script>
+  <script src="ngo.js"></script>
+</body>
+</html>

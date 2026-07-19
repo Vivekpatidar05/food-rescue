@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodRescue — Donor Dashboard</title>
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap"
+    rel="stylesheet"
+  />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("fr_theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="donor.css" />
+</head>
+<body>
+  <nav class="nav">
+    <span class="logo">🥗 FoodRescue</span>
+    <div class="nav-right">
+      <div class="bell-wrap">
+        <button id="btn-bell" class="btn-bell" type="button" title="Notifications">
+          🔔<span id="bell-count" class="bell-count hidden">0</span>
+        </button>
+        <div id="bell-panel" class="bell-panel hidden"></div>
+      </div>
+      <span id="trust-badge" class="trust-badge" title="Your trust score">🛡 100</span>
+      <span id="user-name" class="user-name"></span>
+      <button id="btn-logout" class="btn-logout" type="button">Log out</button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <h1 class="hero-title">Every Meal Saved Matters</h1>
+    <p class="hero-sub">
+      Broadcast your surplus food and our matching engine finds the nearest NGO
+      within minutes — vegetarian-first, always.
+    </p>
+    <button id="btn-toggle-form" class="btn-cta" type="button">＋ Broadcast Surplus Food</button>
+    <div id="impact-strip" class="impact-strip">
+      <span class="impact-chip">🥘 <b id="stat-kg">0</b> kg rescued</span>
+      <span class="impact-chip">🍽 <b id="stat-meals">0</b> meals served</span>
+      <span class="impact-chip">✅ <b id="stat-rescues">0</b> rescues</span>
+      <span class="impact-chip">🌍 <b id="stat-co2">0</b> kg CO₂e saved</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel" id="achievements-section">
+      <div class="panel-head">
+        <h2>🏆 Your Rescue Journey</h2>
+      </div>
+      <div id="achievements-card"><p class="empty-state">Loading your badges…</p></div>
+    </section>
+
+    <section id="broadcast-section" class="panel fr-accent-top hidden">
+      <h2>Broadcast a Food Batch</h2>
+      <div id="template-strip" class="template-strip hidden">
+        <span class="field-label" style="margin-top:0">⚡ Quick fill from a saved template</span>
+        <div id="template-chips" class="fr-chip-row"></div>
+      </div>
+      <form id="broadcast-form" novalidate>
+        <label for="food-description">What food is it?</label>
+        <textarea
+          id="food-description"
+          rows="2"
+          placeholder="e.g. 40 portions of vegetable biryani from a wedding buffet"
+          required
+        ></textarea>
+
+        <div class="form-row form-row-3">
+          <div class="form-field">
+            <label for="quantity-kg">Quantity (kg)</label>
+            <input id="quantity-kg" type="number" min="0.1" step="0.1" required />
+          </div>
+          <div class="form-field">
+            <label for="prepared-ago" title="Cooked food is safe for ~4 hours after preparation">🕒 Cooked how long ago?</label>
+            <select id="prepared-ago">
+              <option value="">Not sure / not cooked</option>
+              <option value="0.5">Under 1 hour</option>
+              <option value="1.5">1–2 hours</option>
+              <option value="2.5">2–3 hours</option>
+              <option value="3.5">3–4 hours</option>
+              <option value="5">Over 4 hours</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="pickup-address">Pickup address</label>
+            <input id="pickup-address" type="text" placeholder="Street, area, city" required />
+          </div>
+        </div>
+
+        <span class="field-label">Dietary tags</span>
+        <div class="tag-row">
+          <label class="tag-check locked">
+            <input type="checkbox" value="vegetarian" checked disabled />
+            🌱 Vegetarian <small>(always included)</small>
+          </label>
+          <label class="tag-check">
+            <input type="checkbox" name="dietary" value="vegan" /> Vegan
+          </label>
+          <label class="tag-check">
+            <input type="checkbox" name="dietary" value="gluten-free" /> Gluten-free
+          </label>
+          <label class="tag-check">
+            <input type="checkbox" name="dietary" value="jain" /> Jain
+          </label>
+          <label class="tag-check" title="Dairy / cream-based food — only NGOs with cold storage will be matched, and the pickup window tightens to 2 hours">
+            <input type="checkbox" id="cold-chain" /> ❄ Needs refrigeration
+          </label>
+        </div>
+
+        <div class="geo-row">
+          <div class="form-field">
+            <label for="lat">Latitude</label>
+            <input id="lat" type="text" readonly placeholder="—" />
+          </div>
+          <div class="form-field">
+            <label for="lng">Longitude</label>
+            <input id="lng" type="text" readonly placeholder="—" />
+          </div>
+          <button id="btn-locate" class="btn-ghost" type="button">📍 Use my location</button>
+        </div>
+
+        <div class="submit-row">
+          <button class="btn-cta btn-submit" type="submit">Broadcast Now</button>
+          <button id="btn-save-template" class="btn-ghost" type="button" title="Save this form as a reusable template">💾 Save as template</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Your Active Broadcasts</h2>
+        <span id="refresh-note" class="refresh-note">auto-refreshes every 30s</span>
+      </div>
+      <div id="batches-list" class="batches-list">
+        <p class="empty-state">Loading your batches…</p>
+      </div>
+    </section>
+
+    <section class="panel fr-accent-top" id="esg-section">
+      <div class="panel-head">
+        <div>
+          <h2>🌍 Sustainability &amp; Carbon Impact (ESG)</h2>
+          <p class="zone-hint" style="margin:0">
+            Your audited climate impact — landfill methane prevented plus avoided
+            production emissions, from verified completed rescues only.
+          </p>
+        </div>
+        <div class="batch-actions" style="margin:0">
+          <button id="btn-esg-csv" class="fr-btn-mini brand" type="button">📄 CSV audit report</button>
+          <button id="btn-esg-print" class="fr-btn-mini cool" type="button">🖨 Certified report</button>
+        </div>
+      </div>
+      <div id="esg-tiles" class="esg-tiles"><p class="empty-state">Calculating your carbon impact…</p></div>
+      <div id="esg-equivalents" class="esg-equivalents"></div>
+      <div class="esg-months-wrap">
+        <p class="field-label">Monthly CO₂e avoided (last 12 months)</p>
+        <div id="esg-months" class="esg-months"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="pos-section">
+      <div class="panel-head">
+        <div>
+          <h2>🤖 POS / kitchen system integration</h2>
+          <p class="zone-hint" style="margin:0">
+            Let your billing or inventory system broadcast surplus automatically at
+            closing time — generate an API key and call one endpoint. The key is
+            shown once; only its hash is stored.
+          </p>
+        </div>
+        <div class="batch-actions" style="margin:0">
+          <button id="btn-gen-key" class="fr-btn-mini brand" type="button">🔑 Generate key</button>
+          <button id="btn-revoke-key" class="fr-btn-mini danger hidden" type="button">Revoke</button>
+        </div>
+      </div>
+      <div id="pos-key-info" class="pos-key-info"><p class="empty-state">Checking for an existing key…</p></div>
+    </section>
+
+    <div class="two-col">
+      <section class="panel fr-accent-top">
+        <div class="panel-head">
+          <h2>📈 My Impact Report</h2>
+          <button id="btn-csv" class="fr-btn-mini cool" type="button">⬇ CSV export</button>
+        </div>
+        <div id="my-impact" class="my-impact">
+          <p class="empty-state">Loading your impact…</p>
+        </div>
+      </section>
+
+      <section class="panel fr-accent-top">
+        <div class="panel-head">
+          <h2>🎁 Invite &amp; Earn Trust</h2>
+        </div>
+        <div id="referral-card" class="referral-card">
+          <p class="empty-state">Loading referral status…</p>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>🔁 Recurring Donations</h2>
+        <button id="btn-toggle-recurring" class="fr-btn-mini brand" type="button">＋ New schedule</button>
+      </div>
+      <p class="section-hint">
+        Run a canteen or banquet hall? Schedule your predictable surplus and
+        FoodRescue broadcasts it automatically — every week, on time.
+      </p>
+      <form id="recurring-form" class="recurring-form hidden" novalidate>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="rec-desc">Food description</label>
+            <input id="rec-desc" type="text" placeholder="e.g. Canteen surplus rice + dal" required />
+          </div>
+          <div class="form-field">
+            <label for="rec-kg">Quantity (kg)</label>
+            <input id="rec-kg" type="number" min="0.1" step="0.1" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="rec-address">Pickup address</label>
+            <input id="rec-address" type="text" placeholder="Street, area, city" required />
+          </div>
+          <div class="form-field">
+            <label for="rec-time">Broadcast time</label>
+            <input id="rec-time" type="time" value="21:00" required />
+          </div>
+        </div>
+        <span class="field-label">Repeat on</span>
+        <div id="rec-days" class="fr-chip-row">
+          <button type="button" class="fr-chip" data-day="0">Mon</button>
+          <button type="button" class="fr-chip" data-day="1">Tue</button>
+          <button type="button" class="fr-chip" data-day="2">Wed</button>
+          <button type="button" class="fr-chip" data-day="3">Thu</button>
+          <button type="button" class="fr-chip" data-day="4">Fri</button>
+          <button type="button" class="fr-chip" data-day="5">Sat</button>
+          <button type="button" class="fr-chip" data-day="6">Sun</button>
+        </div>
+        <button class="btn-cta btn-submit" type="submit">Create schedule</button>
+      </form>
+      <div id="recurring-list" class="recurring-list"></div>
+    </section>
+  </main>
+
+  <div id="self-deliver-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <span class="modal-emoji">🚗💨</span>
+      <h3>No volunteer found nearby</h3>
+      <p id="modal-batch-info" class="modal-batch-info"></p>
+      <p class="modal-pitch">
+        Deliver it yourself and earn <strong>5× Trust Points (+50)!</strong>
+      </p>
+      <div class="modal-actions">
+        <button id="btn-self-deliver" class="btn-cta" type="button">Yes, I'll Deliver It</button>
+        <button id="btn-let-expire" class="btn-muted" type="button">Let It Expire</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="photo-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal photo-modal">
+      <h3>📸 Delivery Proof</h3>
+      <img id="photo-modal-img" class="proof-photo" alt="Delivery proof photo" />
+      <p id="photo-modal-meta" class="modal-batch-info"></p>
+      <button id="btn-close-photo" class="btn-muted" type="button">Close</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="theme.js"></script>
+  <script src="fr-ui.js"></script>
+  <script src="donor.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "FoodRescue — Rescue surplus food",
+  "short_name": "FoodRescue",
+  "description": "Connect surplus food with the people who need it — donors, NGOs and volunteers in one rescue loop.",
+  "start_url": "auth.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#7c3aed",
+  "background_color": "#faf7ff",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

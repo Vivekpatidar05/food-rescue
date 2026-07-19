@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodRescue — Volunteer</title>
+  <meta name="theme-color" content="#0d9488" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("fr_theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="volunteer.css" />
+</head>
+<body>
+  <nav class="nav">
+    <span class="logo">🥗 FoodRescue <span class="logo-sub">Volunteer</span></span>
+    <div class="nav-right">
+      <div class="bell-wrap">
+        <button id="btn-bell" class="btn-bell" type="button" title="Notifications">
+          🔔<span id="bell-count" class="bell-count hidden">0</span>
+        </button>
+        <div id="bell-panel" class="bell-panel hidden"></div>
+      </div>
+      <span id="trust-badge" class="trust-badge" title="Your trust score">🛡 100</span>
+      <span id="vol-name" class="vol-name"></span>
+      <button id="btn-logout" class="btn-logout" type="button">Log out</button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-left">
+      <h1>Ready to roll?</h1>
+      <p>Claim a route, move a meal, earn trust. Every delivery is +10 points.</p>
+    </div>
+    <label class="availability">
+      <span id="status-dot" class="status-dot"></span>
+      <span id="availability-label" class="availability-label">Available</span>
+      <span class="switch">
+        <input id="availability-toggle" type="checkbox" checked />
+        <span class="slider"></span>
+      </span>
+    </label>
+  </header>
+
+  <main class="container">
+    <section id="active-section" class="panel active-panel hidden">
+      <h2>🚗 My Active Delivery</h2>
+      <div id="active-card"></div>
+      <div id="route-map" class="route-map"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Nearby Deliveries Needed</h2>
+        <span class="refresh-note">auto-refreshes every 15s</span>
+      </div>
+      <div id="routes-list" class="routes-list">
+        <p class="empty-state">Scanning for routes near you…</p>
+      </div>
+    </section>
+
+    <section class="panel fr-accent-top">
+      <div class="panel-head">
+        <h2>📅 My Weekly Shifts</h2>
+        <button id="btn-save-shifts" class="fr-btn-mini cool" type="button">💾 Save shifts</button>
+      </div>
+      <p class="shift-hint">
+        Tell the matching engine when you usually ride — on-shift volunteers
+        get first pick of nearby routes (worth a 1.5 km head start).
+      </p>
+      <div id="avail-grid" class="fr-avail-grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="achieve-head">
+        <h2>🎖️ My Achievements</h2>
+        <span id="streak-chip" class="streak-chip"></span>
+      </div>
+      <p id="level-line" class="level-line">Loading…</p>
+      <div class="xp-bar"><div id="xp-fill" class="xp-fill" style="width: 0%"></div></div>
+      <div id="badge-grid" class="badge-grid"></div>
+    </section>
+
+    <section class="panel">
+      <h2>🏆 Top Rescuers</h2>
+      <ol id="leaderboard" class="leaderboard">
+        <li class="empty-state">Loading…</li>
+      </ol>
+    </section>
+  </main>
+
+  <div id="proof-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h3>📸 Proof of Delivery</h3>
+      <p class="modal-sub">
+        Snap a photo of the handed-over food at the drop-off point. The donor
+        and NGO can see it — it's your receipt.
+      </p>
+      <input id="proof-input" type="file" accept="image/*" capture="environment" class="hidden" />
+      <button id="btn-take-photo" class="btn-claim" type="button">📷 Open Camera / Choose Photo</button>
+      <img id="proof-preview" class="proof-preview hidden" alt="Delivery proof preview" />
+      <label class="otp-label" for="pickup-code-input">🔑 Donor's pickup code</label>
+      <input
+        id="pickup-code-input"
+        class="otp-input"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        placeholder="6-digit code from the donor"
+        autocomplete="one-time-code"
+      />
+      <div class="modal-actions">
+        <button id="btn-confirm-delivery" class="btn-claim btn-complete" type="button" disabled>
+          ✓ Confirm Delivery
+        </button>
+        <button id="btn-close-proof" class="btn-cancel" type="button">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="theme.js"></script>
+  <script src="fr-ui.js"></script>
+  <script src="volunteer.js"></script>
+</body>
+</html>

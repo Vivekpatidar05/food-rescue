@@ -1,0 +1,16 @@
+Flask==3.0.3
+flask-cors==4.0.1
+pymongo==4.7.3
+python-dotenv==1.0.1
+PyJWT==2.8.0
+werkzeug==3.0.3
+requests==2.32.3
+waitress==3.0.0    # production WSGI server (FLASK_ENV != development)
+
+# --- Data-science layer (NLP, forecasting, anomaly detection) ---
+pandas==3.0.3
+scikit-learn==1.9.0
+statsmodels==0.14.6
+spacy==3.8.13
+# After installing, download the English model once:
+#   python -m spacy download en_core_web_sm

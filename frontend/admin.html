@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodRescue — Ops Analytics</title>
+  <meta name="theme-color" content="#4f46e5" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("fr_theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <nav class="nav">
+    <span class="logo">🥗 FoodRescue <span class="logo-sub">Admin Command Center</span></span>
+    <div class="nav-right">
+      <span id="user-name" class="user-name"></span>
+      <a class="btn-back hidden" href="auth.html" id="btn-back">← My dashboard</a>
+      <button id="btn-logout" class="btn-logout hidden" type="button">Log out</button>
+    </div>
+  </nav>
+
+  <section id="admin-login" class="admin-login hidden">
+    <div class="admin-login-card">
+      <p class="admin-login-icon">🛡️</p>
+      <h1>Administrator sign-in</h1>
+      <p class="admin-login-sub">
+        This console is restricted. Sign in with your administrator credentials —
+        team accounts are provisioned separately from public sign-ups.
+      </p>
+      <form id="admin-login-form" novalidate>
+        <label for="admin-email">Admin email</label>
+        <input id="admin-email" type="email" autocomplete="username" required />
+        <label for="admin-password">Password</label>
+        <input id="admin-password" type="password" autocomplete="current-password" required />
+        <button class="btn-admin-login" type="submit">Enter command center</button>
+      </form>
+      <p id="admin-login-error" class="admin-login-error hidden"></p>
+      <p class="admin-login-foot"><a href="auth.html">← Back to the public app</a></p>
+    </div>
+  </section>
+
+  <main class="container hidden" id="admin-main">
+    <nav class="admin-tabs" id="admin-tabs" aria-label="Console sections"></nav>
+
+    <section class="tile-row" id="tile-row" data-tab="overview">
+      <div class="tile"><span class="tile-value" id="tile-kg">—</span><span class="tile-label">kg rescued (all-time)</span></div>
+      <div class="tile"><span class="tile-value" id="tile-meals">—</span><span class="tile-label">meals served (est.)</span></div>
+      <div class="tile"><span class="tile-value" id="tile-rescues">—</span><span class="tile-label">rescues completed</span></div>
+      <div class="tile"><span class="tile-value" id="tile-active">—</span><span class="tile-label">batches live right now</span></div>
+      <div class="tile tile-alert"><span class="tile-value" id="tile-pending-verify">—</span><span class="tile-label">accounts awaiting review</span></div>
+    </section>
+
+    <section class="panel fr-accent-top" id="verify-panel" data-tab="verify">
+      <div class="panel-head">
+        <div>
+          <h2>🛡️ Verification queue</h2>
+          <p class="panel-sub">Every new donor, NGO and volunteer waits here until your team confirms they're genuine</p>
+        </div>
+        <div class="user-filters">
+          <select id="verify-status">
+            <option value="pending" selected>Pending review</option>
+            <option value="rejected">Rejected</option>
+            <option value="approved">Approved</option>
+          </select>
+        </div>
+      </div>
+      <div id="verify-list" class="verify-list"><p class="panel-sub">Loading…</p></div>
+    </section>
+
+    <section class="panel fr-accent-top" data-tab="overview">
+      <div class="panel-head">
+        <div>
+          <h2>🚨 Emergency surge mode</h2>
+          <p class="panel-sub">Floods, festivals, mass events — widen every matching radius citywide and alert all partners</p>
+        </div>
+        <span id="surge-state" class="surge-state">checking…</span>
+      </div>
+      <div class="surge-controls">
+        <input id="surge-reason" type="text" maxlength="200" placeholder="Public reason (shown on every dashboard banner)" />
+        <select id="surge-mult">
+          <option value="1.5">1.5× radius</option>
+          <option value="2" selected>2× radius</option>
+          <option value="3">3× radius</option>
+          <option value="4">4× radius</option>
+        </select>
+        <button id="btn-surge-on" class="btn-small btn-surge-on" type="button">Activate</button>
+        <button id="btn-surge-off" class="btn-small" type="button">Deactivate</button>
+      </div>
+    </section>
+
+    <section class="panel" data-tab="users">
+      <div class="panel-head">
+        <div>
+          <h2>👥 User management</h2>
+          <p class="panel-sub" id="users-sub">Search accounts, suspend abusers, correct trust scores (audited)</p>
+        </div>
+        <div class="user-filters">
+          <input id="user-search" type="search" placeholder="Search name or email…" />
+          <select id="user-role">
+            <option value="">All roles</option>
+            <option value="donor">Donors</option>
+            <option value="ngo">NGOs</option>
+            <option value="volunteer">Volunteers</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-scroll"><table id="users-table"></table></div>
+    </section>
+
+    <section class="panel" data-tab="overview">
+      <div class="panel-head">
+        <div>
+          <h2>⭐ Latest community ratings</h2>
+          <p class="panel-sub">Peer reviews posted after completed rescues</p>
+        </div>
+      </div>
+      <div id="ratings-feed" class="ratings-feed"><p class="panel-sub">Loading…</p></div>
+    </section>
+
+    <section class="panel" data-tab="overview">
+      <div class="panel-head">
+        <div>
+          <h2>🗺️ Live city map</h2>
+          <p class="panel-sub">Every zone right now — pending food, rescues in motion, and today's completions</p>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="dot dot-pending"></span>Pending</span>
+          <span class="legend-item"><span class="dot dot-moving"></span>In motion</span>
+          <span class="legend-item"><span class="dot dot-done"></span>Done today</span>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div id="zone-map" class="chart zone-map"></div>
+        <div id="zone-map-tooltip" class="tooltip hidden"></div>
+      </div>
+    </section>
+
+    <section class="panel" data-tab="analytics">
+      <div class="panel-head">
+        <div>
+          <h2>Rescue activity — last 30 days</h2>
+          <p class="panel-sub">Surplus broadcast vs. actually rescued, kg per day (real rescues only)</p>
+        </div>
+        <div class="legend" id="trend-legend">
+          <span class="legend-item"><span class="dot dot-broadcast"></span>Broadcast kg</span>
+          <span class="legend-item"><span class="dot dot-rescued"></span>Rescued kg</span>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div id="trend-chart" class="chart"></div>
+        <div id="trend-tooltip" class="tooltip hidden"></div>
+      </div>
+      <details class="table-view">
+        <summary>View as table</summary>
+        <div class="table-scroll"><table id="trend-table"></table></div>
+      </details>
+    </section>
+
+    <section class="panel" data-tab="analytics">
+      <div class="panel-head">
+        <div>
+          <h2>7-day surplus forecast by zone</h2>
+          <p class="panel-sub" id="forecast-sub">Holt-Winters per-zone forecast with suggested volunteer pre-positioning</p>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div id="forecast-chart" class="chart"></div>
+        <div id="forecast-tooltip" class="tooltip hidden"></div>
+      </div>
+      <details class="table-view">
+        <summary>View as table</summary>
+        <div class="table-scroll"><table id="forecast-table"></table></div>
+      </details>
+    </section>
+
+    <section class="panel" data-tab="analytics">
+      <div class="panel-head">
+        <div>
+          <h2>Citywide surplus forecast — next 7 days</h2>
+          <p class="panel-sub" id="band-sub">Point forecast with an 80% prediction interval — the band is the honest uncertainty</p>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div id="band-chart" class="chart"></div>
+        <div id="band-tooltip" class="tooltip hidden"></div>
+      </div>
+    </section>
+
+    <section class="panel" data-tab="analytics">
+      <div class="panel-head">
+        <div>
+          <h2>Forecast accuracy — walk-forward backtest</h2>
+          <p class="panel-sub" id="accuracy-sub">Scored on held-out days the model never trained on</p>
+        </div>
+      </div>
+      <div class="scorecard" id="accuracy-cards"></div>
+      <div class="chart-wrap">
+        <div id="overlay-chart" class="chart"></div>
+        <div id="overlay-tooltip" class="tooltip hidden"></div>
+      </div>
+      <div class="legend" id="overlay-legend">
+        <span class="legend-item"><span class="dot dot-actual"></span>Actual</span>
+        <span class="legend-item"><span class="dot dot-predicted"></span>Forecast</span>
+      </div>
+    </section>
+
+    <section class="panel" data-tab="analytics">
+      <div class="panel-head">
+        <div>
+          <h2>Demand patterns — weekday &times; hour</h2>
+          <p class="panel-sub" id="heatmap-sub">Where surplus concentrates across the week</p>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div id="heatmap" class="heatmap"></div>
+        <div id="heatmap-tooltip" class="tooltip hidden"></div>
+      </div>
+    </section>
+
+    <section class="panel" data-tab="fraud">
+      <div class="panel-head">
+        <div>
+          <h2>Trust audit — flagged accounts</h2>
+          <p class="panel-sub" id="audit-sub">Physics rules + IsolationForest over completed-delivery timelines</p>
+        </div>
+        <button id="btn-rerun-audit" class="btn-small" type="button">↻ Re-run audit</button>
+      </div>
+      <div class="table-scroll"><table id="audit-table"></table></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="theme.js"></script>
+  <script src="fr-ui.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
