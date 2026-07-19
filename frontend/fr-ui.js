@@ -1094,6 +1094,10 @@
   function boot() {
     mountHint();
     mountAccountEntry();
+    // Deep link: <panel>.html#settings opens account settings straight away.
+    if (location.hash === "#settings" && token()) {
+      setTimeout(openAccountSettings, 400);
+    }
     pollSurge();
     setInterval(pollSurge, SURGE_POLL_MS);
     if (token()) {

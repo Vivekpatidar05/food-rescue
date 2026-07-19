@@ -20,6 +20,14 @@ logged-in password change with session revocation, broadcast cancellation,
 password-confirmed account deletion) — all on a vibrant multi-hue design
 system with full dark mode.
 
+## Screenshots
+
+| | |
+| --- | --- |
+| ![Sign in / register (dark mode)](docs/screenshots/auth.png) *Sign-in & registration — dark mode* | ![Donor dashboard](docs/screenshots/donor.png) *Donor dashboard — live ticker, impact, badges, broadcasts* |
+| ![NGO console](docs/screenshots/ngo.png) *NGO console — nearby food sorted by distance* | ![Volunteer app](docs/screenshots/volunteer.png) *Volunteer app — routes, weekly shifts, achievements* |
+| ![Admin command center](docs/screenshots/admin.png) *Admin command center — surge mode, ratings, live city map* | ![Account settings](docs/screenshots/settings.png) *Account settings — profile, password, danger zone* |
+
 | Layer     | Technology                                                     |
 | --------- | -------------------------------------------------------------- |
 | Backend   | Python 3.11+, Flask, flask-cors, PyMongo, python-dotenv, PyJWT |
@@ -686,3 +694,9 @@ edits), and the personal impact report + CSV export.
 - **Route info:** Google Maps Distance Matrix with a transparent Haversine
   fallback (`route_info.status: "fallback"`) when the key is missing or the
   API returns no result.
+
+---
+
+## License
+
+Released under the [MIT License](LICENSE).
